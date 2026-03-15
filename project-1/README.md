@@ -36,6 +36,7 @@ fractal Mandelbrot {
     zoom 200
     iterations 500
 }
+```
 
 #### Parâmetros:
 
@@ -56,6 +57,7 @@ fractal Julia {
     constant c = -0.4
     iterations 500
 }
+```
 
 #### Parâmetros da Equação:
 
@@ -72,6 +74,7 @@ render {
     resolution 800 800
     color gradient
 }
+```
 
 #### Parâmetros da renderização:
 
@@ -84,6 +87,7 @@ Após definir o fractal e os parâmetros de renderização, a imagem pode ser ge
 
 ```rust
 generate Mandelbrot
+```
 
 Esse comando executa o processo iterativo definido e produz a visualização.
 
