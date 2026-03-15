@@ -24,8 +24,6 @@ Isso possibilita explorar diferentes configurações de equações e transforma�
 
 Esta linguagem permite a definição, configuração e renderização de fractais através de uma sintaxe declarativa simples.
 
----
-
 ### Definição de um Fractal
 
 A construção básica utiliza a palavra-chave `fractal`, seguida pelo nome e um bloco de parâmetros.
@@ -93,7 +91,75 @@ Esse comando executa o processo iterativo definido e produz a visualização.
 
 ## Gramática da Linguagem
 
-> Apresente a gramática da linguagem.
+```
+parser grammar FractalParser;
+
+options { tokenVocab=FractalLexer; }
+
+program
+    : fractalDef renderBlock? generateStmt EOF
+    ;
+
+fractalDef
+    : FRACTAL IDENT LBRACE fractalBody RBRACE
+    ;
+
+fractalBody
+    : (centerStmt
+      | zoomStmt
+      | equationStmt
+      | constantStmt
+      | iterationStmt
+      )*
+    ;
+
+centerStmt
+    : CENTER LPAREN expr COMMA expr RPAREN
+    ;
+
+zoomStmt
+    : ZOOM NUMBER
+    ;
+
+equationStmt
+    : EQUATION IDENT EQ expr
+    ;
+
+constantStmt
+    : CONSTANT IDENT EQ expr
+    ;
+
+iterationStmt
+    : ITERATIONS NUMBER
+    ;
+
+renderBlock
+    : RENDER LBRACE resolutionStmt colorStmt? RBRACE
+    ;
+
+resolutionStmt
+    : RESOLUTION NUMBER NUMBER
+    ;
+
+colorStmt
+    : COLOR IDENT
+    ;
+
+generateStmt
+    : GENERATE IDENT
+    ;
+
+expr
+    : expr POW expr
+    | expr STAR expr
+    | expr SLASH expr
+    | expr PLUS expr
+    | expr MINUS expr
+    | NUMBER
+    | IDENT
+    | LPAREN expr RPAREN
+    ;
+```
 
 ## Exemplos Selecionados
 
@@ -102,4 +168,5 @@ Esse comando executa o processo iterativo definido e produz a visualização.
 # Referências Bibliográficas
 
 > https://en.wikipedia.org/wiki/Fractal-generating_software
+
 > GLEICK, James. Chaos: making a new science. New York: Viking, 1987.
