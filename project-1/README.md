@@ -22,7 +22,70 @@ Isso possibilita explorar diferentes configurações de equações e transforma�
 
 ## Sintaxe da Linguagem na Forma de Tutorial
 
-> Apresente um guia de sintaxe da linguagem na forma explicativa.
+Esta linguagem permite a definição, configuração e renderização de fractais através de uma sintaxe declarativa simples.
+
+---
+
+### Definição de um Fractal
+
+A construção básica utiliza a palavra-chave `fractal`, seguida pelo nome e um bloco de parâmetros.
+
+```rust
+fractal Mandelbrot {
+    center (-0.5, 0)
+    zoom 200
+    iterations 500
+}
+
+#### Parâmetros:
+
+* **fractal**: Inicia a definição de um fractal.
+* **center**: Define o ponto central da região do plano complexo que será visualizada.
+* **zoom**: Controla o nível de ampliação da imagem.
+* **iterations**: Define o número máximo de iterações utilizadas no cálculo.
+
+Esses parâmetros determinam a região e o nível de detalhe da visualização do fractal.
+
+### Definição de equações iterativas
+
+A linguagem permite especificar explicitamente a equação iterativa responsável pela geração do fractal.
+
+```rust
+fractal Julia {
+    equation z = z^2 + c
+    constant c = -0.4
+    iterations 500
+}
+
+#### Parâmetros da Equação:
+
+* **equation**: Define a regra iterativa aplicada repetidamente.
+* **constant**: Define parâmetros utilizados na equação.
+* **iterations**: Especifica quantas vezes a equação será aplicada durante o cálculo.
+
+### Configuração de Renderização
+
+A linguagem também permite definir parâmetros relacionados à visualização da imagem gerada.
+
+```rust
+render {
+    resolution 800 800
+    color gradient
+}
+
+#### Parâmetros da renderização:
+
+* **resolution**: Define o tamanho da imagem gerada.
+* **color**: Especifica o esquema de cores utilizado na visualização.
+
+### Geração do Fractal
+
+Após definir o fractal e os parâmetros de renderização, a imagem pode ser gerada com o comando `generate`.
+
+```rust
+generate Mandelbrot
+
+Esse comando executa o processo iterativo definido e produz a visualização.
 
 ## Gramática da Linguagem
 
