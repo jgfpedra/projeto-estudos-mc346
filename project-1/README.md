@@ -210,7 +210,74 @@ expr
 
 ## Exemplos Selecionados
 
-> Coloque um conjunto de exemplos selecionados e os resultados alcançados.
+### Conjunto de Mandelbrot
+```
+fractal Mandelbrot {
+
+    equation z = z^2 + c
+    iterations 500
+    center (-0.5, 0)
+    zoom 200
+}
+render {
+    resolution 800 800
+    color gradient
+}
+generate Mandelbrot
+```
+#### Resultado Esperado
+Geração da visualização do Conjunto de Mandelbrot com 500 iterações e resolução 800x800 pixels.
+
+### Conjunto de Julia
+```
+fractal Julia {
+
+    equation z = z^2 + c
+    constant c = -0.4
+    iterations 500
+    center (0, 0)
+    zoom 150
+}
+render {
+    resolution 800 800
+    color gradient
+}
+generate Julia
+```
+#### Resultado Esperado
+Visualização do Julia set correspondente ao valor da constante especificada.
+
+### Fractal Cúbico
+```
+fractal Cubic {
+
+    equation z = z^3 + c
+    constant c = 0.3
+    iterations 400
+    center (0, 0)
+    zoom 180
+}
+generate Cubic
+```
+#### Resultado Esperado
+Visualização de um fractal gerado pela equação cúbica.
+Há um aumento na complexidade dos padrões devido ao acréscimo na ordem polinomial.
+
+### Maior Zoom
+```
+fractal HigherZoom {
+
+    equation z = z^2 + c
+    iterations 1000
+    center (-0.75, 0.1)
+    zoom 500
+}
+
+generate HigherZoom
+```
+#### Resultado Esperado
+Visualização de uma região ampliada do conjunto de Mandelbrot.
+Possui maior nível de detalhe devido ao aumento do número de iterações.
 
 # Referências Bibliográficas
 
