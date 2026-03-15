@@ -90,7 +90,42 @@ generate Mandelbrot
 Esse comando executa o processo iterativo definido e produz a visualização.
 
 ## Gramática da Linguagem
+> `FractalLexer.g4`
 
+```
+lexer grammar FractalLexer;
+
+FRACTAL    : 'fractal' ;
+EQUATION   : 'equation' ;
+CONSTANT   : 'constant' ;
+ITERATIONS : 'iterations' ;
+CENTER     : 'center' ;
+ZOOM       : 'zoom' ;
+RENDER     : 'render' ;
+RESOLUTION : 'resolution' ;
+COLOR      : 'color' ;
+GENERATE   : 'generate' ;
+
+PLUS  : '+' ;
+MINUS : '-' ;
+STAR  : '*' ;
+SLASH : '/' ;
+POW   : '^' ;
+
+LPAREN : '(' ;
+RPAREN : ')' ;
+LBRACE : '{' ;
+RBRACE : '}' ;
+COMMA  : ',' ;
+EQ     : '=' ;
+
+NUMBER : [0-9]+ ('.' [0-9]+)? ;
+IDENT  : [a-zA-Z][a-zA-Z0-9]* ;
+
+WS : [ \t\r\n]+ -> skip ;
+```
+
+> `FractalParser.g4`
 ```
 parser grammar FractalParser;
 
