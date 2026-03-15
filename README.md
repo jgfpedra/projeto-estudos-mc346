@@ -1,5 +1,3 @@
-# Modelo para Apresentação do Grupo e Projeto
-
 # Projeto `<Título do Projeto>`
 # Project `<Title in English>`
 
