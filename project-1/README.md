@@ -213,7 +213,6 @@ expr
 ### Conjunto de Mandelbrot
 ```
 fractal Mandelbrot {
-
     equation z = z^2 + c
     iterations 500
     center (-0.5, 0)
@@ -231,7 +230,6 @@ Geração da visualização do Conjunto de Mandelbrot com 500 iterações e reso
 ### Conjunto de Julia
 ```
 fractal Julia {
-
     equation z = z^2 + c
     constant c = -0.4
     iterations 500
@@ -245,12 +243,11 @@ render {
 generate Julia
 ```
 #### Resultado Esperado
-Visualização do Julia set correspondente ao valor da constante especificada.
+Visualização do conjunto de Julia correspondente ao valor da constante especificada.
 
 ### Fractal Cúbico
 ```
 fractal Cubic {
-
     equation z = z^3 + c
     constant c = 0.3
     iterations 400
@@ -266,7 +263,6 @@ Há um aumento na complexidade dos padrões devido ao acréscimo na ordem polino
 ### Maior Zoom
 ```
 fractal HigherZoom {
-
     equation z = z^2 + c
     iterations 1000
     center (-0.75, 0.1)
