@@ -6,12 +6,8 @@ Fractais são estruturas geométricas geradas por processos iterativos simples q
 Esses fenômenos foram amplamente popularizados pelo trabalho de Benoît Mandelbrot no estudo do conjunto de Mandelbrot.  
 A DSL proposta oferece uma forma declarativa e concisa de descrever regras iterativas e parâmetros necessários para gerar e visualizar fractais.
 
-> Motivação
-
 Embora existam diversas ferramentas para geração e exploração de fractais, como Ultra Fractal, XaoS e Fractint, essas aplicações oferecem interfaces específicas ou dependem de configurações detalhadas.  
 Uma DSL permite representar as regras matemáticas e transformações que geram os fractais, fornecendo uma forma mais estruturada e legível de descrever esses sistemas.
-
-> Relevância
 
 Ao formalizar a descrição de sistemas iterativos para geração de fractais, a linguagem pode servir como ferramenta de experimentação e ensino em matemática computacional e dinâmica não linear.  
 Isso possibilita explorar diferentes configurações de equações e transformações de forma clara, facilitando a compreensão de como regras simples podem produzir comportamentos complexos.
@@ -90,7 +86,16 @@ generate Mandelbrot
 Esse comando executa o processo iterativo definido e produz a visualização.
 
 ## Gramática da Linguagem
-> `FractalLexer.g4`
+
+### `FractalLexer.g4`
+
+#### Tokens:
+
+* **Palavras-chave da linguagem**: `fractal`, `equation`, `iterations`, `render`, `generate`.
+* **Operadores aritméticos**: `+`, `-`, `*`, `/`, `^`.
+* **Símbolos estruturais**: `{}`, `[]`, `,`, `=`.
+* **Números**: `NUMBER`.
+* **Identificadores**: `IDENT`.
 
 ```
 lexer grammar FractalLexer;
@@ -125,7 +130,14 @@ IDENT  : [a-zA-Z][a-zA-Z0-9]* ;
 WS : [ \t\r\n]+ -> skip ;
 ```
 
-> `FractalParser.g4`
+### `FractalParser.g4`
+
+Estrutura
+* Define-se o fractal.
+* Opcionalmente, inclui-se o bloco de renderização.
+* Comando de geração.
+
+
 ```
 parser grammar FractalParser;
 
