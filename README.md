@@ -1,5 +1,5 @@
-# Projeto `<Título do Projeto>`
-# Project `<Title in English>`
+# Projeto `Ambiente para Exploração de Fractais com Uso da FractalDSL`
+# Project `Environment for Exploring Fractals Using FractalDSL`
 
 > |Nome  | RA |
 > |--|--|
