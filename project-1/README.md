@@ -14,7 +14,7 @@ Isso possibilita explorar diferentes configurações de equações e transforma�
 
 ## Slides
 
-> Coloque aqui o link para o PDF da apresentação.
+https://docs.google.com/presentation/d/1PEGOMFt4rmjglXANx2P-HdXT6lAElCCy9IkIvIgMZow/edit?usp=sharing
 
 ## Sintaxe da Linguagem na Forma de Tutorial
 
