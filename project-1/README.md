@@ -277,6 +277,11 @@ Possui maior nível de detalhe devido ao aumento do número de iterações.
 
 # Referências Bibliográficas
 
-> https://en.wikipedia.org/wiki/Fractal-generating_software
 
 > GLEICK, James. Chaos: making a new science. New York: Viking, 1987.
+
+> POINCARÉ, Henri. Sur le problème des trois corps et les équations de la dynamique. Acta Mathematica, Stockholm, v. 13, p. 1–270, 1890.
+
+> LORENZ, Edward N. Deterministic nonperiodic flow. Journal of the Atmospheric Sciences, Boston, v. 20, n. 2, p. 130–141, 1963.
+
+> MANDELBROT, Benoît B. Les objets fractals: forme, hasard et dimension. Paris: Flammarion, 1975.
