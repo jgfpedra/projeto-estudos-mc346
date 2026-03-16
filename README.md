@@ -4,5 +4,5 @@
 > |Nome  | RA |
 > |--|--|
 > | João Guilherme Ferreira Pedra  | 248349  |
-> | Nome2  | 123456  |
-> | Nome3  | 123456  |
+> | Lucca Ewertom Ryuichi Hirakawa   | 250431  |
+> | Ygor Silva de Jesus  | 248505  |
