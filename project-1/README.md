@@ -53,6 +53,11 @@ fractal Julia {
 }
 ```
 
+A linguagem suporta duas formas de representar números complexos nas equações:  
+
+1. Notação de Par Ordenado: (real, imaginario) -> Ex: constant c = (0, -0.8). 
+2. Notação Algébrica: ni -> Ex: constant c = 0.3 + 0.5i. 
+
 #### Parâmetros da Equação:
 
 * **equation**: Define a regra iterativa aplicada repetidamente.
@@ -110,6 +115,9 @@ RENDER     : 'render' ;
 RESOLUTION : 'resolution' ;
 COLOR      : 'color' ;
 GENERATE   : 'generate' ;
+Z_VAR      : 'z' ; 
+C_VAR      : 'c' ; 
+I_UNIT     : 'i' ;
 
 PLUS  : '+' ;
 MINUS : '-' ;
@@ -126,6 +134,7 @@ EQ     : '=' ;
 
 NUMBER : [0-9]+ ('.' [0-9]+)? ;
 IDENT  : [a-zA-Z][a-zA-Z0-9]* ;
+
 
 WS : [ \t\r\n]+ -> skip ;
 ```
@@ -197,14 +206,16 @@ generateStmt
     ;
 
 expr
-    : expr POW expr
-    | expr STAR expr
-    | expr SLASH expr
-    | expr PLUS expr
-    | expr MINUS expr
-    | NUMBER
-    | IDENT
-    | LPAREN expr RPAREN
+    : LPAREN expr RPAREN              # Parenteses
+    | LPAREN expr COMMA expr RPAREN     # NumeroComplexo, Aceita (0, -0.5)
+    | expr POW expr                   # Potencia
+    | expr (STAR | SLASH) expr         # MultiplicacaoDivisao
+    | expr (PLUS | MINUS) expr         # SomaSubtracao
+    | NUMBER I_UNIT                    # Imaginario Puro, Aceita 0.5i
+    | NUMBER                           # Real
+    | Z_VAR                             
+    | C_VAR                             
+    | IDENT                             # OutrosIdentificadores
     ;
 ```
 
