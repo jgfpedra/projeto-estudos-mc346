@@ -20,7 +20,9 @@
 ;; ─── Execução de IFS ─────────────────────────────────────────────────────
 
 (define (fractal-with-depth? x)
-  (and (list? x) (assq 'depth x)))
+  (and (list? x)
+       (pair? (car x))
+       (assq 'depth x)))
 
 (define (apply-affine aff point)
   (let ((a (list-ref aff 1)) (b (list-ref aff 2))

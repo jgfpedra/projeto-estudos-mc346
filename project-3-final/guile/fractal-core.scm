@@ -6,6 +6,7 @@
   (list
     `(name       . ,name)
     '(equation   . #nil)
+    '(ifs        . #nil) 
     '(constants  . ())
     '(iterations . 0)
     '(center     . (0 0))

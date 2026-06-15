@@ -2,6 +2,11 @@
 (load "fractal-generate.scm")
 (load "fractal-params.scm")
 
+(define test-f (create-fractal "Teste"))
+(display "antes: ") (display test-f) (newline)
+(define test-f2 (set-field test-f 'ifs '(a b c)))
+(display "depois: ") (display test-f2) (newline)
+(display "get: ") (display (get-field test-f2 'ifs)) (newline)
 ;; ─── 1. Mandelbrot ───────────────────────────────────────────────────────
 
 (define mandelbrot
@@ -34,7 +39,10 @@
       (transform 0.33 (affine 0.5 0.0 0.0 0.5 0.0  0.0))
       (transform 0.33 (affine 0.5 0.0 0.0 0.5 0.5  0.0))
       (transform 0.34 (affine 0.5 0.0 0.0 0.5 0.25 0.5)))
-    50000))
+    10000))
+
+(display (create-fractal "Sierpinski"))
+(newline)
 
 ;; ─── 4. Barnsley Fern (base da ilha) ─────────────────────────────────────
 
@@ -45,7 +53,7 @@
       (transform 0.85 (affine  0.85  0.04 -0.04  0.85  0.00  1.60))
       (transform 0.07 (affine  0.20 -0.26  0.23  0.22  0.00  1.60))
       (transform 0.07 (affine -0.15  0.28  0.26  0.24  0.00  0.44)))
-    100000))
+    50000))
 
 ;; ─── 5. Ilha — IFS com ramos compostos via with-depth ────────────────────
 ;;
@@ -71,7 +79,7 @@
     (ifs (create-fractal "Ilha")
       (transform 0.5 (with-depth 12 sierpinski-base))   ; litoral recortado
       (transform 0.5 (with-depth  8 barnsley-base)))     ; vegetação interior
-    20000))
+    10000))
 
 ;; ─── Exporta CSVs para o renderer Python ─────────────────────────────────
 
