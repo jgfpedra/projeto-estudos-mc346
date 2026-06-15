@@ -1,13 +1,10 @@
 #!/usr/bin/env python3
 """
 render_fractal.py — lê o CSV gerado pelo backend Guile e salva PNG.
-
-Uso:
-    python render_fractal.py sierpinski.csv sierpinski.png --color green
-    python render_fractal.py barnsley.csv   barnsley.png   --color limegreen
-    python render_fractal.py ilha.csv       ilha.png       --color teal --bg "#0a1a2f"
 """
 
+from matplotlib.colors import LinearSegmentedColormap
+import matplotlib.pyplot as plt
 import argparse
 import csv
 import sys
@@ -16,8 +13,6 @@ from pathlib import Path
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
 
 
 # ─── paletas temáticas ────────────────────────────────────────────────────
