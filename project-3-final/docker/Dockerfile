@@ -17,8 +17,9 @@ RUN pip install --break-system-packages \
 
 # ─── copia o projeto ─────────────────────────────────────────────────────
 WORKDIR /fractal
-COPY guile/  ./guile/
-COPY python/ ./python/
+COPY guile/   ./guile/
+COPY python/  ./python/
+COPY ilha.frac ./ilha.frac
 
 # ─── diretório de saída ───────────────────────────────────────────────────
 RUN mkdir -p /fractal/output

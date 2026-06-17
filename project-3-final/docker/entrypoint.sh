@@ -5,7 +5,7 @@ set -e
 cd /fractal/guile
 
 echo "=== FractalDSL: gerando pontos com Guile ==="
-guile --no-auto-compile -l examples.scm
+guile --no-auto-compile -c "(load \"fractal-reader.scm\") (run-frac-file \"/fractal/ilha.frac\")"
 
 echo ""
 echo "=== Renderizando imagens com Python ==="
