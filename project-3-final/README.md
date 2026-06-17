@@ -19,7 +19,7 @@ FractalDSL/
 ```
 
 ---
-
+ 
 ## Rodando com Docker (recomendado)
 
 ### Pré-requisito
