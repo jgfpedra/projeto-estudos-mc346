@@ -1,6 +1,7 @@
 ;;; fractal-generate.scm — parser de equação + ponto de entrada `generate`
 (load "fractal-core.scm")
 (load "fractal-ifs.scm")
+(load "fractal-coastline.scm")
 
 ;; ─── Parser mínimo ────────────────────────────────────────────────────────
 
@@ -45,10 +46,13 @@
 ;; ─── Ponto de entrada ────────────────────────────────────────────────────
 
 (define (generate fractal)
-  (let ((eq-str  (get-field fractal 'equation))
-        (ifs-val (get-field fractal 'ifs))
-        (iters   (get-field fractal 'iterations)))
+  (let ((eq-str        (get-field fractal 'equation))
+        (ifs-val       (get-field fractal 'ifs))
+        (coastline-val (get-field fractal 'coastline))
+        (iters         (get-field fractal 'iterations)))
     (cond
+      ((not (eq? coastline-val #nil))
+       (generate-island coastline-val))
       ((not (eq? ifs-val #nil))
        (iterate-ifs fractal iters))
       ((string? eq-str)
@@ -58,17 +62,26 @@
        (error "Fractal sem equation nem ifs"
               (get-field fractal 'name))))))
 
-;; ─── Exporta pontos para CSV (para o renderer Python) ────────────────────
+;; ─── Exporta pontos para CSV ──────────────────────────────────────────────
 
 (define (export-csv fractal filename)
-  (let ((pts (generate fractal)))
+  (let ((result (generate fractal)))
     (call-with-output-file filename
       (lambda (port)
-        (display "x,y\n" port)
-        (for-each
-          (lambda (p)
-            (display (car p) port)
-            (display "," port)
-            (display (cadr p) port)
-            (newline port))
-          pts)))))
+        (display "x,y,type\n" port)
+        (define (write-pts pts label)
+          (for-each
+            (lambda (p)
+              (display (car p)  port) (display "," port)
+              (display (cadr p) port) (display "," port)
+              (display label    port) (newline port))
+            pts))
+        ;; generate-island returns (coast-points . decor-points)
+        ;; everything else returns a flat list of points
+        (if (and (pair? result)
+                 (pair? (car result))
+                 (list? (caar result)))
+            (begin
+              (write-pts (car result) "coast")
+              (write-pts (cdr result) "decor"))
+            (write-pts result "point"))))))

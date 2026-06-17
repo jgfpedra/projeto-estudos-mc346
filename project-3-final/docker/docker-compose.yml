@@ -4,7 +4,4 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     volumes:
-      # monta uma pasta local para receber as imagens geradas
       - ./output:/fractal/output
-    # para modo interativo (ex: testar snippets Guile)
-    # command: guile

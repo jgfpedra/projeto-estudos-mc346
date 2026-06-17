@@ -42,20 +42,63 @@
             t
             (loop (cdr ts) new-acc))))))
 
+(define (iterate-ifs-from transforms n)
+  ;; Like iterate-ifs but takes a flat transforms list directly,
+  ;; starts at the origin, returns the point cloud.
+  (let loop ((point '(0.0 0.0))
+             (points '())
+             (i 0)
+             (stack (list (cons transforms n))))
+    (cond
+      ((= i n) (reverse points))
+      ((null? stack) (reverse points))
+      (else
+       (let* ((top        (car stack))
+              (ts         (car top))
+              (remaining  (cdr top)))
+         (if (= remaining 0)
+             (loop point points i (cdr stack))
+             (let* ((t   (choose-transform ts))
+                    (val (caddr t)))
+               (cond
+                 ((fractal-with-depth? val)
+                  (let* ((d           (cdr (assq 'depth val)))
+                         (sub-ts      (get-field val 'ifs))
+                         (new-stack   (cons (cons sub-ts d)
+                                            (cons (cons ts (- remaining 1))
+                                                  (cdr stack)))))
+                    (loop point points i new-stack)))
+                 (else
+                  (let ((new-pt (apply-affine val point)))
+                    (loop new-pt (cons new-pt points) (+ i 1)
+                          (cons (cons ts (- remaining 1)) (cdr stack)))))))))))))
+
 (define (iterate-ifs fractal n)
-  (let ((transforms (get-field fractal 'ifs)))
-    (let loop ((point '(0.0 0.0)) (points '()) (i 0))
-      (if (= i n)
-          (reverse points)
-          (let* ((t   (choose-transform transforms))
-                 (val (caddr t)))
-            (cond
-              ((fractal-with-depth? val)
-               (let* ((d       (cdr (assq 'depth val)))
-                      (sub-pts (iterate-ifs val d))
-                      (new-pt  (if (null? sub-pts) point
-                                   (car (reverse sub-pts)))))
-                 (loop new-pt (append points sub-pts) (+ i 1))))
-              (else
-               (let ((new-pt (apply-affine val point)))
-                 (loop new-pt (cons new-pt points) (+ i 1))))))))))
+  (let ((root-transforms (get-field fractal 'ifs)))
+    (let loop ((point '(0.0 0.0))
+               (points '())
+               (i 0)
+               (stack (list (cons root-transforms n))))
+      (cond
+        ((= i n) (reverse points))
+        ((null? stack) (reverse points))
+        (else
+         (let* ((top         (car stack))
+                (transforms  (car top))
+                (remaining   (cdr top)))
+           (if (= remaining 0)
+               (loop point points i (cdr stack))
+               (let* ((t   (choose-transform transforms))
+                      (val (caddr t)))
+                 (cond
+                   ((fractal-with-depth? val)
+                    (let* ((d (cdr (assq 'depth val)))
+                           (sub-transforms (get-field val 'ifs))
+                           (new-stack (cons (cons sub-transforms d)
+                                             (cons (cons transforms (- remaining 1))
+                                                   (cdr stack)))))
+                      (loop point points i new-stack)))
+                   (else
+                    (let ((new-pt (apply-affine val point)))
+                      (loop new-pt (cons new-pt points) (+ i 1)
+                            (cons (cons transforms (- remaining 1)) (cdr stack))))))))))))))
