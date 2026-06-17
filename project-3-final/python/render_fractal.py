@@ -4,6 +4,7 @@ render_fractal.py — lê o CSV gerado pelo backend Guile e salva PNG.
 """
 
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.path import Path as MplPath
 import matplotlib.pyplot as plt
 import argparse
 import csv
@@ -28,6 +29,44 @@ PALETTES = {
                   "#a8e6a0", "#e8d98a", "#f5f0e0"],
 }
 
+# ─── estilos de objeto (como o par coastline+decor é pintado) ─────────────
+# land_color: cor do preenchimento sólido do polígono, ou None para não preencher
+# clip_decor: recorta a nuvem de decoração para o interior do polígono
+# outline:    desenha a linha de contorno do polígono
+# quando clip_decor é False, os próprios pontos do contorno entram na nuvem
+# de densidade (sem terra sólida nem contorno duro) — usado por "cloud"
+
+STYLES = {
+    "island": {
+        "land_color": "#0f2e18",
+        "palette":    "limegreen",
+        "bg":         "#020d14",
+        "clip_decor": True,
+        "outline":    True,
+    },
+    "forest": {
+        "land_color": "#0c2410",
+        "palette":    "green",
+        "bg":         "#040d04",
+        "clip_decor": True,
+        "outline":    False,
+    },
+    "mountain": {
+        "land_color": "#4a4540",
+        "palette":    "mono",
+        "bg":         "#10141a",
+        "clip_decor": True,
+        "outline":    True,
+    },
+    "cloud": {
+        "land_color": None,
+        "palette":    "mono",
+        "bg":         "#0a1622",
+        "clip_decor": False,
+        "outline":    False,
+    },
+}
+
 
 def load_points(csv_path: str):
     """
@@ -50,10 +89,14 @@ def make_cmap(palette_name: str):
     return LinearSegmentedColormap.from_list("fractal", colors, N=512)
 
 
-def render(csv_path: str, out_path: str, palette: str = "mono",
-           bg: str = "#000000", dpi: int = 300,
+def render(csv_path: str, out_path: str, palette: str = None,
+           bg: str = None, style: str = "island", dpi: int = 300,
            width: int = 2048, height: int = 2048,
            alpha: float = 0.6, point_size: float = 0.3):
+
+    cfg = STYLES.get(style, STYLES["island"])
+    palette = palette or cfg["palette"]
+    bg = bg or cfg["bg"]
 
     xs, ys, types = load_points(csv_path)
     print(f"  {len(xs):,} pontos carregados de {csv_path}")
@@ -79,23 +122,41 @@ def render(csv_path: str, out_path: str, palette: str = "mono",
         print(f"    coast: {coast_mask.sum():,} pts  |  decor: {
               decor_mask.sum():,} pts")
 
+        has_polygon = coast_mask.sum() > 2
+        cx_closed = cy_closed = None
+
+        if has_polygon:
+            cx_closed, cy_closed = np.append(cx, cx[0]), np.append(cy, cy[0])
+
+            if cfg["clip_decor"]:
+                # solid landmass + decoration clipped to its interior,
+                # so vegetation never floats outside the boundary
+                if cfg["land_color"]:
+                    ax.fill(cx_closed, cy_closed,
+                            color=cfg["land_color"], zorder=1)
+                if dx.size > 0:
+                    interior = MplPath(np.column_stack([cx, cy])).contains_points(
+                        np.column_stack([dx, dy]))
+                    dx, dy = dx[interior], dy[interior]
+            else:
+                # no hard boundary: blend the contour itself into the
+                # soft point cloud instead of drawing a solid shape
+                dx, dy = np.append(dx, cx), np.append(dy, cy)
+
         # decoration: density heatmap in the chosen palette
-        if decor_mask.sum() > 0:
+        if dx.size > 0:
             bins = max(width, height) // 4
             h, xedges, yedges = np.histogram2d(dx, dy, bins=bins)
             h = np.log1p(h)
             cmap = make_cmap(palette)
             extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
             ax.imshow(h.T, origin="lower", extent=extent,
-                      cmap=cmap, alpha=alpha, interpolation="bilinear")
+                      cmap=cmap, alpha=alpha, interpolation="bilinear", zorder=2)
             ax.scatter(dx, dy, s=point_size * 0.5, c="white",
-                       alpha=0.06, linewidths=0)
+                       alpha=0.06, linewidths=0, zorder=2)
 
         # coastline: bright continuous polygon outline on top
-        if coast_mask.sum() > 0:
-            # close the polygon
-            cx_closed = np.append(cx, cx[0])
-            cy_closed = np.append(cy, cy[0])
+        if cfg["outline"] and has_polygon:
             ax.plot(cx_closed, cy_closed,
                     color="white", linewidth=0.6, alpha=0.9, zorder=10)
 
@@ -120,10 +181,14 @@ def main():
     parser = argparse.ArgumentParser(description="Renderiza fractal CSV → PNG")
     parser.add_argument("csv",    help="arquivo CSV gerado pelo backend Guile")
     parser.add_argument("output", help="arquivo PNG de saída")
-    parser.add_argument("--color",  default="mono",
+    parser.add_argument("--style",  default="island",
+                        choices=list(STYLES.keys()),
+                        help="tipo de objeto (controla preenchimento/recorte/contorno)")
+    parser.add_argument("--color",  default=None,
                         choices=list(PALETTES.keys()),
-                        help="paleta de cores")
-    parser.add_argument("--bg",     default="#000000", help="cor de fundo hex")
+                        help="paleta de cores (padrão: a do --style)")
+    parser.add_argument("--bg",     default=None,
+                        help="cor de fundo hex (padrão: a do --style)")
     parser.add_argument("--dpi",    type=int, default=300)
     parser.add_argument("--width",  type=int, default=None)
     parser.add_argument("--height", type=int, default=None)
@@ -142,7 +207,7 @@ def main():
     height = args.height if args.height is not None else args.size
 
     render(args.csv, args.output,
-           palette=args.color, bg=args.bg,
+           palette=args.color, bg=args.bg, style=args.style,
            dpi=args.dpi, width=width, height=height,
            alpha=args.alpha, point_size=args.pt)
 

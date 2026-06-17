@@ -1,13 +1,13 @@
-fractal Ilha
+fractal Floresta
     iterations 10000
     coastline
-        points 7
+        points 9
         radius 1.0
-        roughness 0.4
-        depth 6
+        roughness 0.55
+        depth 5
         decorate
-            steps 80
-            scale 0.06
+            steps 120
+            scale 0.09
             transform 0.85
                 depth 4
                 barnsley
@@ -27,7 +27,6 @@ fractal Ilha
 
 render
     resolution 1200 1200
-    color mono
-    style island
+    style forest
 
-generate Ilha
+generate Floresta

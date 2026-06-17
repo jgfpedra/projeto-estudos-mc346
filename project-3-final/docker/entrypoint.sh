@@ -2,6 +2,7 @@
 WIDTH=800
 HEIGHT=800
 COLOR=mono
+STYLE=island
 if [ -f render.cfg ]; then
     source render.cfg
 fi
@@ -14,7 +15,7 @@ echo "=== Renderizando imagens com Python ==="
 
 python3 /fractal/python/render_fractal.py \
     ilha.csv /fractal/output/ilha.png \
-    --color "limegreen" --width "$WIDTH" --height "$HEIGHT" --bg "#020d14" --dpi 2000
+    --style "$STYLE" --width "$WIDTH" --height "$HEIGHT" --dpi 2000
 
 echo ""
 echo "=== Pronto! Imagens em /fractal/output/ ==="
