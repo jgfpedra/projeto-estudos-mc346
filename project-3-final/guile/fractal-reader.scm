@@ -125,6 +125,30 @@
          f))))
 
 
+;; ─── build de equation (Mandelbrot/Julia-style escape-time fractals) ────────
+
+(define (build-equation-node name all-nodes)
+  (let* ((get-str    (lambda (key default)
+                       (let ((n (find (lambda (c) (equal? (cadr c) key)) all-nodes)))
+                         (if n (caddr n) default))))
+         (eq-str     (get-str "equation" "z=z^2+c"))
+         (iters      (string->number (get-str "iterations" "100")))
+         (zoom-val   (string->number (get-str "zoom" "100")))
+         (center-node (find (lambda (n) (equal? (cadr n) "center")) all-nodes))
+         (cre        (if center-node (string->number (caddr center-node)) 0))
+         (cim        (if center-node (string->number (cadddr center-node)) 0))
+         (res-node   (find (lambda (n) (equal? (cadr n) "resolution")) all-nodes))
+         (rw         (if res-node (string->number (caddr res-node)) 800))
+         (rh         (if res-node (string->number (cadddr res-node)) 800)))
+    `(define ,(string->symbol name)
+       (let* ((f (create-fractal ,name))
+              (f (equation f ,eq-str))
+              (f (iterations f ,iters))
+              (f (center f ,cre ,cim))
+              (f (zoom f ,zoom-val))
+              (f (set-field f 'resolution (list ,rw ,rh))))
+         f))))
+
 ;; ─── build render-node ─────────────────────────────────────────────────────
 
 (define (build-render-node node all-nodes)
@@ -228,9 +252,11 @@
              (let* ((name          (caddr node))
                     (children      (direct-children (cdr (member node indexed eq?)) 0))
                     (has-coastline (find (lambda (n) (equal? (cadr n) "coastline")) children))
-                    (expr          (if has-coastline
-                                       (build-coastline-node name children)
-                                       (build-fractal name children))))
+                    (has-equation  (find (lambda (n) (equal? (cadr n) "equation")) children))
+                    (expr          (cond
+                                      (has-coastline (build-coastline-node name children))
+                                      (has-equation  (build-equation-node name children))
+                                      (else          (build-fractal name children)))))
                (display "Compilando: ") (display name) (newline)
                (display expr) (newline)
                (eval expr (interaction-environment))))

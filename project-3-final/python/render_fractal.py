@@ -70,18 +70,21 @@ STYLES = {
 
 def load_points(csv_path: str):
     """
-    Returns three arrays: xs, ys, types.
+    Returns four arrays: xs, ys, types, values.
     'types' contains the string in the 'type' column, or 'point' for
-    old CSVs that don't have that column.
+    old CSVs that don't have that column. 'values' holds the per-row
+    numeric payload used by escape-time grids (0.0 elsewhere).
     """
-    xs, ys, types = [], [], []
+    xs, ys, types, values = [], [], [], []
     with open(csv_path, newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
             xs.append(float(row["x"]))
             ys.append(float(row["y"]))
             types.append(row.get("type", "point"))
-    return np.array(xs), np.array(ys), np.array(types)
+            raw_value = row.get("value", "")
+            values.append(float(raw_value) if raw_value not in ("", None) else 0.0)
+    return np.array(xs), np.array(ys), np.array(types), np.array(values)
 
 
 def make_cmap(palette_name: str):
@@ -98,7 +101,7 @@ def render(csv_path: str, out_path: str, palette: str = None,
     palette = palette or cfg["palette"]
     bg = bg or cfg["bg"]
 
-    xs, ys, types = load_points(csv_path)
+    xs, ys, types, values = load_points(csv_path)
     print(f"  {len(xs):,} pontos carregados de {csv_path}")
 
     fig, ax = plt.subplots(figsize=(width / dpi, height / dpi), dpi=dpi)
@@ -108,9 +111,26 @@ def render(csv_path: str, out_path: str, palette: str = None,
     fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
 
     unique_types = set(types)
+    is_escape = "escape" in unique_types
     is_coastline = unique_types & {"coast", "decor"}
 
-    if is_coastline:
+    if is_escape:
+        # ── escape-time grid: one (px, py) -> iteration-count cell per pixel ──
+        px, py = xs.astype(int), ys.astype(int)
+        grid_w, grid_h = px.max() + 1, py.max() + 1
+        grid = np.zeros((grid_h, grid_w))
+        grid[py, px] = values
+        max_iter = grid.max()
+
+        inside = grid >= max_iter
+        norm = np.clip(grid / max_iter, 0, 1) ** 0.5  # gamma for smoother bands
+        cmap = make_cmap(palette or "gradient")
+        rgba = cmap(norm)
+        rgba[inside] = (0, 0, 0, 1)  # classic black interior (never escaped)
+
+        ax.imshow(rgba, origin="lower", interpolation="bilinear")
+
+    elif is_coastline:
         # ── coastline mode: render each layer separately ──────────────────
 
         coast_mask = types == "coast"

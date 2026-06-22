@@ -43,6 +43,37 @@
           ((> (c-abs z) 2.0) i)
           (else (loop (f z c) (+ i 1))))))
 
+;; Scans a window of the complex plane, one c-value per pixel, and returns
+;; escape-time triples (px py iterations). The window is `center` ± half-width,
+;; where half-width = 200/zoom (so zoom 100 ≈ the classic full-set view).
+(define (generate-equation-grid fractal)
+  (let* ((eq-str   (get-field fractal 'equation))
+         (f        (parse-equation eq-str))
+         (max-iter (get-field fractal 'iterations))
+         (center   (get-field fractal 'center))
+         (cre0     (car center))
+         (cim0     (cadr center))
+         (zoom-val (get-field fractal 'zoom))
+         (half-w   (/ 200.0 zoom-val))
+         (res      (get-field fractal 'resolution))
+         (width    (car res))
+         (height   (cadr res))
+         (half-h   (* half-w (/ height width))))
+    (let loop-y ((py 0) (pts '()))
+      (if (= py height)
+          pts
+          (let ((im (+ (- cim0 half-h)
+                       (* (/ py (max 1 (- height 1))) (* 2 half-h)))))
+            (loop-y (+ py 1)
+                    (let loop-x ((px 0) (acc pts))
+                      (if (= px width)
+                          acc
+                          (let* ((re   (+ (- cre0 half-w)
+                                          (* (/ px (max 1 (- width 1))) (* 2 half-w))))
+                                 (iter (iterate-equation f max-iter (make-c re im))))
+                            (loop-x (+ px 1)
+                                    (cons (list px py iter) acc)))))))))))
+
 ;; ─── Ponto de entrada ────────────────────────────────────────────────────
 
 (define (generate fractal)
@@ -56,8 +87,7 @@
       ((not (eq? ifs-val #nil))
        (iterate-ifs fractal iters))
       ((string? eq-str)
-       (let ((f (parse-equation eq-str)))
-         (iterate-equation f iters (make-c 0.0 0.0))))
+       (generate-equation-grid fractal))
       (else
        (error "Fractal sem equation nem ifs"
               (get-field fractal 'name))))))
@@ -68,20 +98,24 @@
   (let ((result (generate fractal)))
     (call-with-output-file filename
       (lambda (port)
-        (display "x,y,type\n" port)
+        (display "x,y,type,value\n" port)
+        (define (write-pt x y label value)
+          (display x port)     (display "," port)
+          (display y port)     (display "," port)
+          (display label port) (display "," port)
+          (display value port) (newline port))
         (define (write-pts pts label)
-          (for-each
-            (lambda (p)
-              (display (car p)  port) (display "," port)
-              (display (cadr p) port) (display "," port)
-              (display label    port) (newline port))
-            pts))
-        ;; generate-island returns (coast-points . decor-points)
-        ;; everything else returns a flat list of points
-        (if (and (pair? result)
-                 (pair? (car result))
-                 (list? (caar result)))
-            (begin
-              (write-pts (car result) "coast")
-              (write-pts (cdr result) "decor"))
-            (write-pts result "point"))))))
+          (for-each (lambda (p) (write-pt (car p) (cadr p) label "")) pts))
+        (define (write-escape pts)
+          (for-each (lambda (p) (write-pt (car p) (cadr p) "escape" (caddr p))) pts))
+        (cond
+          ;; generate-island returns (coast-points . decor-points)
+          ((and (pair? result) (pair? (car result)) (list? (caar result)))
+           (write-pts (car result) "coast")
+           (write-pts (cdr result) "decor"))
+          ;; generate-equation-grid returns a flat list of (px py iter) triples
+          ((and (pair? result) (pair? (car result)) (= (length (car result)) 3))
+           (write-escape result))
+          ;; everything else (ifs) returns a flat list of (x y) points
+          (else
+           (write-pts result "point")))))))

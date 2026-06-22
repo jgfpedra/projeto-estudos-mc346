@@ -11,7 +11,8 @@
     '(constants  . ())
     '(iterations . 0)
     '(center     . (0 0))
-    '(zoom       . 100)))
+    '(zoom       . 100)
+    '(resolution . (800 800))))
 
 (define (set-field fractal field value)
   (map (lambda (sublist)
