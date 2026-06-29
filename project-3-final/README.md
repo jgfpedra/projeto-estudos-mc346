@@ -1,150 +1,147 @@
 # FractalDSL
 
-DSL embutida em **Guile/Scheme** para descrever fractais, com renderer em Python que gera imagens PNG.
+DSL embutida em **Guile/Scheme** para descrever fractais declarativamente, com renderer Python que gera imagens PNG.
 
 ```
-FractalDSL/
+project-3-final/
+├── *.frac                    # arquivos de entrada (ilha, floresta, montanha, england, mandelbrot)
 ├── guile/
-│   ├── fractal-core.scm      # estrutura de dados + aritmética complexa
-│   ├── fractal-params.scm    # primitivas: equation, constant, iterations, center, zoom…
+│   ├── fractal-reader.scm    # entry point: parser .frac + run-frac-file + render-png!
+│   ├── fractal-core.scm      # estrutura de dados (alist) + aritmética complexa
+│   ├── fractal-params.scm    # primitivas: equation, iterations, center, zoom…
 │   ├── fractal-ifs.scm       # IFS: affine, transform, (ifs …), (with-depth d f)
-│   ├── fractal-generate.scm  # parser de equação + generate + export-csv
-│   └── examples.scm          # Mandelbrot, Julia, Sierpinski, Barnsley, Ilha
+│   ├── fractal-coastline.scm # modo coastline: midpoint displacement + decoração IFS
+│   └── fractal-generate.scm  # parser de equação + generate + export-csv
 ├── python/
-│   └── render_fractal.py     # CSV → PNG com density coloring
-└── docker/
-    ├── Dockerfile
-    ├── docker-compose.yml
-    └── entrypoint.sh
+│   └── render_fractal.py     # CSV → PNG
+├── docker/
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── entrypoint.sh
+├── fractal-examples.ipynb    # notebook com exemplos interativos
+└── dsl-comparison.md         # comparação com CFDG, L-Systems, Flam3, Ultra Fractal, p5.js
 ```
 
 ---
- 
+
 ## Rodando com Docker (recomendado)
 
-### Pré-requisito
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) ou Docker Engine + Compose instalado.
-
-### 1 — Build e run completo
 ```bash
-# da raiz do projeto:
 cd docker
 mkdir -p output
-docker compose up --build
+docker compose up --build   # gera ilha.png em docker/output/
 ```
 
-As imagens aparecem em `docker/output/`.
+Para outros fractais, edite `entrypoint.sh` trocando o nome do `.frac` e adicione o `COPY` correspondente no `Dockerfile`.
 
-### 2 — Shell interativo dentro do container
+Shell interativo dentro do container:
 ```bash
 docker compose run --entrypoint bash fractaldsl
-# dentro do container:
-cd /fractal/guile
-guile --no-auto-compile
-# REPL Guile — carregue os módulos:
-# (load "fractal-generate.scm")
-# (load "fractal-params.scm")
-```
-
-### 3 — Só o renderer Python
-```bash
-docker compose run --entrypoint python3 fractaldsl \
-    /fractal/python/render_fractal.py \
-    /fractal/guile/ilha.csv \
-    /fractal/output/ilha.png \
-    --color teal --bg "#020d14"
 ```
 
 ---
 
-## Rodando localmente (sem Docker)
+## Rodando localmente
 
-### Guile
+### Pré-requisitos
 ```bash
-# Ubuntu/Debian
-sudo apt install guile-3.0
+brew install guile          # macOS
+sudo apt install guile-3.0  # Ubuntu/Debian
 
-# macOS (Homebrew)
-brew install guile
-
-# Gera os CSVs:
-cd guile
-guile --no-auto-compile -l examples.scm
+pip3 install numpy matplotlib
 ```
 
-### Python
+### Execução via arquivo `.frac`
 ```bash
-pip install numpy matplotlib
+cd project-3-final/guile
+guile --no-auto-compile -c '(load "fractal-reader.scm") (run-frac-file "../ilha.frac")'
+```
 
-python render_fractal.py sierpinski.csv sierpinski.png --color green
-python render_fractal.py barnsley.csv   barnsley.png   --color limegreen
-python render_fractal.py ilha.csv       ilha.png       --color teal --bg "#0a1a2f"
+Se o `.frac` contiver um bloco `render`, o PNG é gerado automaticamente. Caso contrário, renderize manualmente:
+```bash
+python3 ../python/render_fractal.py ilha.csv ilha.png --style island --color mono
+```
+
+### Notebook interativo
+```bash
+cd project-3-final
+python3 -m jupyter lab
+# abrir fractal-examples.ipynb
 ```
 
 ---
 
-## Como a DSL funciona
+## Sintaxe `.frac`
 
-### Primitivas de configuração
+Três blocos de nível zero, com indentação significativa:
+
+```
+fractal Mandelbrot
+    equation   z=z^2+c    # escape-time
+    iterations 150
+    center     -0.5 0
+    zoom       100
+    resolution 800 800
+
+fractal Ilha
+    iterations 10000
+    coastline              # midpoint displacement
+        points    7
+        radius    1.0
+        roughness 0.4
+        depth     6
+        decorate           # decoração IFS em cada aresta
+            steps 80
+            scale 0.06
+            transform 0.85
+                depth 4
+                barnsley
+                    affine 0.85 0.04 -0.04 0.85 0.0 1.60
+
+render
+    resolution 1200 1200
+    color mono             # green | ocean | fire | teal | limegreen | mono | gradient
+    style island           # island | forest | mountain | cloud
+
+generate Mandelbrot        # exporta mandelbrot.csv e (se houver render) mandelbrot.png
+```
+
+---
+
+## Primitivas Scheme
+
+A camada `.frac` compila para Scheme puro. O mesmo fractal pode ser escrito diretamente:
+
 ```scheme
+; pipeline funcional — cada primitiva devolve um novo fractal (imutável)
 (define mandelbrot
-  (zoom
-    (center
-      (iterations
-        (equation (create-fractal "Mandelbrot") "z=z^2+c")
-        500)
-      -0.5 0)
-    200))
+  (zoom (center (iterations (equation (create-fractal "Mandelbrot") "z=z^2+c") 150) -0.5 0) 100))
 
-(generate mandelbrot)   ; → número de iterações até escape
+(export-csv mandelbrot "mandelbrot.csv")
+
+; ou direto para PNG (lê configurações de render.cfg se existir)
+(render-png! mandelbrot "mandelbrot.png")
 ```
 
-### IFS com macros
 ```scheme
-(define sierpinski
-  (iterations
-    (ifs (create-fractal "Sierpinski")
-      (transform 0.33 (affine 0.5 0.0 0.0 0.5 0.0  0.0))
-      (transform 0.33 (affine 0.5 0.0 0.0 0.5 0.5  0.0))
-      (transform 0.34 (affine 0.5 0.0 0.0 0.5 0.25 0.5)))
-    50000))
+; IFS com composição via with-depth
+(ifs (create-fractal "Ilha")
+  (transform 0.85 (with-depth 4 barnsley))
+  (transform 0.07 (with-depth 4 barnsley)))
 ```
 
-### Composição com `with-depth`
-```scheme
-(define ilha
-  (iterations
-    (ifs (create-fractal "Ilha")
-      (transform 0.5 (with-depth 12 sierpinski-base))   ; litoral recortado
-      (transform 0.5 (with-depth  8 barnsley-base)))    ; vegetação interior
-    20000))
-```
-
-`(with-depth d f)` é uma **macro** que expande `f` por `d` níveis de recursão antes de cada ponto ser amostrado pelo IFS pai — isso permite que fractais sejam valores de primeira classe dentro de outros fractais.
-
-### Exportando para Python
-```scheme
-(export-csv ilha "ilha.csv")
-```
+`(with-depth d f)` expande o sub-fractal `f` por `d` níveis antes de cada ponto ser amostrado — fractais como valores de primeira classe dentro de outros fractais.
 
 ---
 
 ## Opções do renderer
 
-| flag | padrão | descrição |
-|---|---|---|
-| `--color` | `mono` | paleta: `green`, `ocean`, `fire`, `teal`, `limegreen`, `mono` |
-| `--bg` | `#000000` | cor de fundo (hex) |
-| `--dpi` | `300` | resolução do PNG |
-| `--size` | `2048` | largura/altura em pixels |
-| `--alpha` | `0.6` | transparência do mapa de densidade |
-| `--pt` | `0.3` | tamanho do ponto no scatter overlay |
-
----
-
-## Próximos passos sugeridos
-
-- **Coloração por escape time** no Mandelbrot/Julia (atualmente só conta iterações).
-- **IFS estocástico com seed fixo** para reprodutibilidade.
-- **Noise fractal (Perlin + IFS)** para terreno de ilha mais orgânico.
-- **Clojure port**: substituir `define-macro` por `defmacro` do Clojure e usar `defrecord` para a estrutura do fractal.
+| flag | descrição |
+|---|---|
+| `--style` | `island`, `forest`, `mountain`, `cloud` — controla preenchimento e contorno (só coastline) |
+| `--color` | paleta: `green`, `ocean`, `fire`, `teal`, `limegreen`, `mono`, `gradient` |
+| `--bg` | cor de fundo em hex (ex: `#020d14`) |
+| `--width` / `--height` | dimensão do PNG em pixels |
+| `--dpi` | resolução (padrão: 300) |
+| `--alpha` | transparência da nuvem de densidade (0.0–1.0) |
+| `--pt` | tamanho do ponto no scatter |
