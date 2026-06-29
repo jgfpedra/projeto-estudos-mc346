@@ -238,12 +238,54 @@
                              (cons 'roughness ,roughness)
                              (cons 'depth     ,depth)))))
              f)))))
+;; ─── renderer PNG (chama Python como subprocesso) ───────────────────────────
+
+(define (find-renderer)
+  (cond ((file-exists? "../python/render_fractal.py")
+         "../python/render_fractal.py")
+        ((file-exists? "/fractal/python/render_fractal.py")
+         "/fractal/python/render_fractal.py")
+        (else "../python/render_fractal.py")))
+
+;; Lê um valor KEY=value de render.cfg, retorna default se não encontrado.
+(define (read-render-cfg-key key default)
+  (if (not (file-exists? "render.cfg"))
+      default
+      (call-with-input-file "render.cfg"
+        (lambda (port)
+          (let loop ()
+            (let ((line (read-line port)))
+              (cond
+                ((eof-object? line) default)
+                ((string-prefix? (string-append key "=") line)
+                 (substring line (+ (string-length key) 1)))
+                (else (loop)))))))))
+
+;; Gera o CSV do fractal e chama render_fractal.py para produzir um PNG.
+;; Lê WIDTH/HEIGHT/COLOR/STYLE de render.cfg se existir.
+(define (render-png! fractal png-path)
+  (let* ((name     (string-downcase (get-field fractal 'name)))
+         (csv-path (string-append name ".csv")))
+    (display (string-append "Exportando CSV: " csv-path)) (newline)
+    (export-csv fractal csv-path)
+    (let ((width  (read-render-cfg-key "WIDTH" "800"))
+          (height (read-render-cfg-key "HEIGHT" "800"))
+          (color  (read-render-cfg-key "COLOR" "mono"))
+          (style  (read-render-cfg-key "STYLE" "island")))
+      (display (string-append "Renderizando PNG: " png-path)) (newline)
+      (system* "python3" (find-renderer) csv-path png-path
+               "--style" style "--color" color
+               "--width" width "--height" height)
+      (display "PNG gerado.") (newline)
+      png-path)))
+
 ;; ─── entry point ─────────────────────────────────────────────────────────
 
 (define (run-frac-file filename)
-  (let* ((lines   (read-lines filename))
-         (indexed (to-indexed lines))
-         (top     (filter (lambda (n) (= (car n) 0)) indexed)))
+  (let* ((lines      (read-lines filename))
+         (indexed    (to-indexed lines))
+         (top        (filter (lambda (n) (= (car n) 0)) indexed))
+         (render-cfg #f))
     (for-each
       (lambda (node)
         (let ((kw (cadr node)))
@@ -263,12 +305,28 @@
             ((equal? kw "render")
              (let* ((cfg      (build-render-node node indexed))
                     (cfg-path "render.cfg"))
+               (set! render-cfg cfg)
                (display "Configurando render: ") (display cfg) (newline)
                (write-render-config cfg cfg-path)))
             ((equal? kw "generate")
              (let* ((name (caddr node))
                     (sym  (string->symbol name))
-                    (csv  (string-append (string-downcase name) ".csv")))
+                    (csv  (string-append (string-downcase name) ".csv"))
+                    (png  (string-append (string-downcase name) ".png")))
                (display "Exportando: ") (display csv) (newline)
-               (export-csv (eval sym (interaction-environment)) csv))))))
+               (export-csv (eval sym (interaction-environment)) csv)
+               (when render-cfg
+                 (let* ((get-val (lambda (key default)
+                                   (let ((r (assq key render-cfg)))
+                                     (if r (cdr r) default))))
+                        (width   (number->string (get-val 'width 800)))
+                        (height  (number->string (get-val 'height 800)))
+                        (color   (get-val 'color "mono"))
+                        (style   (get-val 'style "island")))
+                   (display (string-append "Renderizando → " png)) (newline)
+                   (system* "python3" (find-renderer) csv png
+                            "--style" style "--color" color
+                            "--width" width "--height" height)
+                   (display "PNG gerado.") (newline))))
+            ))))
       top)))
