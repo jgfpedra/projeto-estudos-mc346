@@ -29,13 +29,6 @@ PALETTES = {
                   "#a8e6a0", "#e8d98a", "#f5f0e0"],
 }
 
-# ─── estilos de objeto (como o par coastline+decor é pintado) ─────────────
-# land_color: cor do preenchimento sólido do polígono, ou None para não preencher
-# clip_decor: recorta a nuvem de decoração para o interior do polígono
-# outline:    desenha a linha de contorno do polígono
-# quando clip_decor é False, os próprios pontos do contorno entram na nuvem
-# de densidade (sem terra sólida nem contorno duro) — usado por "cloud"
-
 STYLES = {
     "island": {
         "land_color": "#0f2e18",
@@ -83,7 +76,8 @@ def load_points(csv_path: str):
             ys.append(float(row["y"]))
             types.append(row.get("type", "point"))
             raw_value = row.get("value", "")
-            values.append(float(raw_value) if raw_value not in ("", None) else 0.0)
+            values.append(float(raw_value)
+                          if raw_value not in ("", None) else 0.0)
     return np.array(xs), np.array(ys), np.array(types), np.array(values)
 
 
@@ -115,7 +109,6 @@ def render(csv_path: str, out_path: str, palette: str = None,
     is_coastline = unique_types & {"coast", "decor"}
 
     if is_escape:
-        # ── escape-time grid: one (px, py) -> iteration-count cell per pixel ──
         px, py = xs.astype(int), ys.astype(int)
         grid_w, grid_h = px.max() + 1, py.max() + 1
         grid = np.zeros((grid_h, grid_w))
@@ -123,7 +116,8 @@ def render(csv_path: str, out_path: str, palette: str = None,
         max_iter = grid.max()
 
         inside = grid >= max_iter
-        norm = np.clip(grid / max_iter, 0, 1) ** 0.5  # gamma for smoother bands
+        # gamma for smoother bands
+        norm = np.clip(grid / max_iter, 0, 1) ** 0.5
         cmap = make_cmap(palette or "gradient")
         rgba = cmap(norm)
         rgba[inside] = (0, 0, 0, 1)  # classic black interior (never escaped)
@@ -131,7 +125,6 @@ def render(csv_path: str, out_path: str, palette: str = None,
         ax.imshow(rgba, origin="lower", interpolation="bilinear")
 
     elif is_coastline:
-        # ── coastline mode: render each layer separately ──────────────────
 
         coast_mask = types == "coast"
         decor_mask = types == "decor"
@@ -155,7 +148,8 @@ def render(csv_path: str, out_path: str, palette: str = None,
                     ax.fill(cx_closed, cy_closed,
                             color=cfg["land_color"], zorder=1)
                 if dx.size > 0:
-                    interior = MplPath(np.column_stack([cx, cy])).contains_points(
+                    interior = MplPath(np.column_stack([cx,
+                                                        cy])).contains_points(
                         np.column_stack([dx, dy]))
                     dx, dy = dx[interior], dy[interior]
             else:
@@ -171,7 +165,8 @@ def render(csv_path: str, out_path: str, palette: str = None,
             cmap = make_cmap(palette)
             extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
             ax.imshow(h.T, origin="lower", extent=extent,
-                      cmap=cmap, alpha=alpha, interpolation="bilinear", zorder=2)
+                      cmap=cmap, alpha=alpha,
+                      interpolation="bilinear", zorder=2)
             ax.scatter(dx, dy, s=point_size * 0.5, c="white",
                        alpha=0.06, linewidths=0, zorder=2)
 
@@ -203,7 +198,8 @@ def main():
     parser.add_argument("output", help="arquivo PNG de saída")
     parser.add_argument("--style",  default="island",
                         choices=list(STYLES.keys()),
-                        help="tipo de objeto (controla preenchimento/recorte/contorno)")
+                        help="""tipo de objeto (controla
+                        preenchimento/recorte/contorno)""")
     parser.add_argument("--color",  default=None,
                         choices=list(PALETTES.keys()),
                         help="paleta de cores (padrão: a do --style)")

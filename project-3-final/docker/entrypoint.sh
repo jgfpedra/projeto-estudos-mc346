@@ -9,12 +9,12 @@ fi
 set -e
 cd /fractal/guile
 echo "=== FractalDSL: gerando pontos com Guile ==="
-guile --no-auto-compile -c "(load \"fractal-reader.scm\") (run-frac-file \"/fractal/ilha.frac\")"
+guile --no-auto-compile -c "(load \"fractal-reader.scm\") (run-frac-file \"/fractal/floresta.frac\")"
 echo ""
 echo "=== Renderizando imagens com Python ==="
 
 python3 /fractal/python/render_fractal.py \
-    ilha.csv /fractal/output/ilha.png \
+    floresta.csv /fractal/output/floresta.png \
     --style "$STYLE" --width "$WIDTH" --height "$HEIGHT" --dpi 2000
 
 echo ""
