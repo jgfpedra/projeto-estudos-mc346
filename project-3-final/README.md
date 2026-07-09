@@ -2,23 +2,19 @@
 
 ## Descrição Resumida da DSL
 
-FractalDSL é uma linguagem de domínio específico embutida em **Guile/Scheme** para descrever e renderizar fractais de forma declarativa. O usuário descreve um fractal através de primitivas compostas em pipeline funcional — sem laços explícitos, sem arrays, sem estado mutável — e a linguagem cuida de toda a matemática subjacente.
+FractalDSL é uma linguagem de domínio específico embutida em **Guile/Scheme** para descrever e renderizar fractais de forma declarativa. O usuário descreve um fractal através de primitivas compostas em pipeline funcional.
 
 A motivação é tornar fractais acessíveis: alguém que não conhece os coeficientes de uma transformação afim ou a lógica de escape-time do Mandelbrot consegue, ainda assim, compor formas complexas ajustando parâmetros de alto nível (`roughness`, `depth`, `zoom`). A DSL oferece três modos de geração — Sistemas de Funções Iteradas (IFS), escape-time (Mandelbrot/Julia) e costa por deslocamento de ponto médio — com um renderer Python que produz imagens PNG.
 
-A relevância está na demonstração de que Lisp/Scheme é excepcionalmente natural para DSLs: a homoiconicidade, os macros higiênicos e a avaliação sob demanda permitem construir uma linguagem nova dentro da linguagem hospedeira com muito pouco código de plumbing.
-
 ## Slides
 
-> *[(link para o PDF da apresentação final —](https://docs.google.com/presentation/d/1i06y_mGzuyqCypy4Dji0fu_97srXgSgDr73D-7HfJCs/edit?usp=sharing) *
+> *[Slides](https://docs.google.com/presentation/d/1i06y_mGzuyqCypy4Dji0fu_97srXgSgDr73D-7HfJCs/edit?usp=sharing)*
 
 ## Sintaxe da Linguagem
 
-A FractalDSL tem duas camadas de sintaxe.
-
 ### Camada externa: arquivos `.frac`
 
-Sintaxe baseada em indentação, inspirada em Python/YAML. Um arquivo `.frac` contém três tipos de bloco de nível zero:
+Sintaxe baseada em indentação, inspirada em Python. Um arquivo `.frac` contém três tipos de bloco de nível zero:
 
 #### `fractal` — define um fractal
 
@@ -128,8 +124,6 @@ A DSL externa compila para chamadas Scheme. O mesmo fractal pode ser escrito dir
 
 ## Gramática da Linguagem
 
-Gramática EBNF para a camada `.frac`. Indentação é significativa: um bloco filho tem recuo estritamente maior que o pai.
-
 ```ebnf
 program        ::= statement+
 statement      ::= fractal-block | render-block | generate-stmt
@@ -181,11 +175,10 @@ NEWLINE        ::= "\n"
 INDENT         ::= " "+   (* nível determinado por contagem de espaços *)
 ```
 
-O formalismo é **EBNF** (Extended Backus-Naur Form). Indentação não é capturada formalmente aqui — o parser em `fractal-reader.scm` usa a contagem de espaços iniciais de cada linha para construir a árvore hierárquica.
+Indentação não é capturada formalmente aqui.
+O parser em `fractal-reader.scm` usa a contagem de espaços iniciais de cada linha para construir a árvore hierárquica.
 
 ## Notebook
-
-[macros-abstraction.ipynb](macros-abstraction.ipynb) — notebook do professor demonstrando o uso de macros Guile (`define-macro` e `define-syntax`) para construir primitivas SQL-like, servindo de referência para o estilo de abstração empregado na FractalDSL.
 
 O código-fonte da DSL está em `guile/` (backend Scheme) e `python/` (renderer). Instruções completas de execução no README.md.
 
@@ -240,11 +233,11 @@ Grid de escape-time: cada pixel colorido pelo número de iterações até `|z| >
 
 A proposta inicial era criar uma DSL declarativa para fractais que abstraísse a matemática de baixo nível. O resultado alcança isso em três dimensões:
 
-**Abstração funcional:** A camada Scheme interna é um pipeline puramente funcional — cada primitiva (`equation`, `iterations`, `center`, `zoom`, `ifs`, `with-depth`) recebe um fractal (alist imutável) e devolve um novo, sem efeitos colaterais. Isso torna a composição direta e testável.
+**Abstração funcional:** A camada Scheme interna é um pipeline funcional — cada primitiva (`equation`, `iterations`, `center`, `zoom`, `ifs`, `with-depth`) recebe um fractal (alist imutável) e devolve um novo, sem efeitos colaterais. Isso torna a composição direta e testável.
 
-**Abstração sintática:** A camada `.frac` eleva ainda mais o nível de abstração, escondendo os parens e a estrutura de alist atrás de uma sintaxe indentada próxima de configuração. O parser (`fractal-reader.scm`) compila esses blocos para Scheme e `eval`ua — uma forma de macro-expansão textual.
+**Abstração sintática:** A camada `.frac` eleva ainda mais o nível de abstração, escondendo os parens e a estrutura de alist atrás de uma sintaxe indentada próxima de configuração. O parser (`fractal-reader.scm`) compila esses blocos para Scheme e `eval`.
 
-**Separação de concerns:** A decisão de separar geração de dados (Guile/Scheme) de renderização (Python/matplotlib) permitiu que cada componente evoluísse independentemente. Adicionar uma nova paleta de cores não requer tocar no código Scheme; adicionar um novo modo de geração não requer tocar no Python.
+**Separação de concerns:** A decisão de separar geração de dados (Guile/Scheme) de renderização (Python/matplotlib) permitiu que cada componente evoluísse independentemente.
 
 O maior desafio foi o parser de indentação: Scheme não tem suporte nativo a sintaxe sensível a whitespace, então foi necessário implementar a lógica de `direct-children` manualmente com contagem de espaços. A ausência de um framework como ANTLR limitou a expressividade da gramática externa.
 
@@ -253,14 +246,14 @@ Um ponto de melhoria identificado: a camada Scheme expõe `ifs` e `with-depth` c
 ## Conclusão
 
 **Principais conclusões:**
-- Scheme/Guile é uma plataforma excelente para eDSLs: a homoiconicidade permite que a DSL interna seja indistinguível da linguagem hospedeira.
-- Pipelines funcionais imutáveis simplificam radicalmente o raciocínio sobre composição de fractais.
-- A separação geração/renderização em linguagens diferentes (Scheme + Python) é uma arquitetura limpa, mas exige uma camada de serialização (CSV) que adiciona I/O.
+- Scheme/Guile é uma plataforma interessante para eDSLs: a homoiconicidade permite que a DSL interna seja indistinguível da linguagem hospedeira.
+- Pipelines funcionais imutáveis simplificam o raciocínio sobre composição de fractais.
+- A separação geração/renderização em linguagens diferentes (Scheme + Python) exige uma camada de serialização (CSV) que adiciona I/O.
 
 **Principais desafios:**
 - Implementar um parser de indentação sem biblioteca de suporte em Scheme.
 - Fazer o `with-depth` funcionar corretamente com uma pilha explícita para evitar recursão infinita no jogo do caos.
-- Integrar a geração estocástica (coastline usa `random-real`) de forma reproduzível (ausência de seed fixo ainda é uma limitação).
+- Integrar a geração estocástica (coastline usa `random-real`) de forma reproduzível.
 
 **Lições aprendidas:**
 - Começar com a eDSL Scheme e só depois adicionar a camada `.frac` foi a ordem certa — a camada externa emergiu naturalmente como açúcar sintático sobre algo que já funcionava.
@@ -268,7 +261,6 @@ Um ponto de melhoria identificado: a camada Scheme expõe `ifs` e `with-depth` c
 
 # Trabalhos Futuros
 
-- **Macros higiênicas:** Reescrever `ifs`, `with-depth` e `transform` usando `define-syntax` para eliminar a necessidade de quotar argumentos manualmente na camada Scheme.
 - **Seed reproduzível:** Adicionar suporte a `seed <N>` no bloco `coastline` e no IFS para tornar os resultados determinísticos.
 - **Coloração por escape-time suavizada:** Implementar smooth coloring (interpolação fracionária) no Mandelbrot em vez de bandas discretas.
 - **Julia sets:** A equação `z=z^2+c` com `c` fixo já funciona matematicamente; falta expor `c` como parâmetro no bloco `equation`.

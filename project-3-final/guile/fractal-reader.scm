@@ -35,6 +35,26 @@
                  (cons (indent-of l) (tokens-of l)))
                lines)))
 
+;; ─── decorações reutilizáveis (define decoration ... / use ...) ──────────
+;;
+;; `define decoration <Nome>` registra um sub-bloco `decorate` nomeado que
+;; pode ser referenciado depois com `use <Nome>` dentro de outro `decorate`.
+;; Isso é resolvido inteiramente aqui, no reader — nenhuma primitiva Scheme
+;; do backend (fractal-core / fractal-ifs / fractal-coastline) precisa mudar.
+
+(define decoration-table (make-hash-table))
+
+(define (register-defines! indexed)
+  (for-each
+    (lambda (node)
+      (if (and (= (car node) 0)
+                (equal? (cadr node) "define")
+                (equal? (caddr node) "decoration"))
+          (let* ((name    (cadddr node))
+                 (subtree (direct-children (cdr (member node indexed eq?)) 0)))
+            (hash-set! decoration-table name subtree))))
+    indexed))
+
 ;; ─── extrai filhos diretos de um nível ───────────────────────────────────
 
 (define (direct-children nodes parent-indent)
@@ -183,18 +203,43 @@
       (display (get-field-alist render-cfg 'style) port)
       (newline port))))
 
-(define (build-decorate-node node all-nodes)
-  (let* ((ind        (car node))
-         (children   (direct-children (cdr (member node all-nodes eq?)) ind))
-         (steps-node (find (lambda (c) (equal? (cadr c) "steps")) children))
-         (scale-node (find (lambda (c) (equal? (cadr c) "scale")) children))
-         (t-nodes    (filter (lambda (c) (equal? (cadr c) "transform")) children))
+;; Constrói (steps . scale . transforms) a partir de um subtree
+;; auto-contido (usado tanto para `decorate` normal quanto para o corpo
+;; de `define decoration`). `subtree` funciona como seu próprio all-nodes,
+;; pois já é a subárvore inteira em ordem de leitura.
+(define (build-decorate-from-subtree subtree)
+  (let* ((steps-node (find (lambda (c) (equal? (cadr c) "steps")) subtree))
+         (scale-node (find (lambda (c) (equal? (cadr c) "scale")) subtree))
+         (t-nodes    (filter (lambda (c) (equal? (cadr c) "transform")) subtree))
          (steps      (if steps-node (string->number (caddr steps-node)) 60))
          (scale      (if scale-node (string->number (caddr scale-node)) 0.06))
-         (transforms (map (lambda (t) (build-transform-node t all-nodes)) t-nodes)))
+         (transforms (map (lambda (t) (build-transform-node t subtree)) t-nodes)))
     `((steps      . ,steps)
       (scale      . ,scale)
-      (transforms . ,transforms))))   ; ← no (list ...) wrapper, just the raw list
+      (transforms . ,transforms))))
+
+(define (build-decorate-node node all-nodes)
+  (let* ((ind      (car node))
+         (children (direct-children (cdr (member node all-nodes eq?)) ind))
+         (use-node (find (lambda (c) (equal? (cadr c) "use")) children)))
+    (if use-node
+        ;; `decorate` referencia uma decoração nomeada via `use <Nome>`.
+        ;; steps/scale locais (se presentes) sobrescrevem os da decoração base;
+        ;; transforms sempre vêm da decoração base (não há merge de transforms).
+        (let* ((name  (caddr use-node))
+               (base  (hash-ref decoration-table name #f)))
+          (if (not base)
+              (error "FractalDSL: decoration não encontrada:" name)
+              (let* ((result      (build-decorate-from-subtree base))
+                     (steps-node  (find (lambda (c) (equal? (cadr c) "steps")) children))
+                     (scale-node  (find (lambda (c) (equal? (cadr c) "scale")) children)))
+                `((steps . ,(if steps-node (string->number (caddr steps-node))
+                                (cdr (assq 'steps result))))
+                  (scale . ,(if scale-node (string->number (caddr scale-node))
+                                (cdr (assq 'scale result))))
+                  (transforms . ,(cdr (assq 'transforms result)))))))
+        ;; comportamento original: decoração escrita inline
+        (build-decorate-from-subtree children))))
 
 (define (build-coastline-node name all-nodes)
   (let* ((coast-node  (find (lambda (n) (equal? (cadr n) "coastline")) all-nodes))
@@ -284,8 +329,11 @@
 (define (run-frac-file filename)
   (let* ((lines      (read-lines filename))
          (indexed    (to-indexed lines))
-         (top        (filter (lambda (n) (= (car n) 0)) indexed))
+         (top        (filter (lambda (n) (and (= (car n) 0)
+                                                (not (equal? (cadr n) "define"))))
+                              indexed))
          (render-cfg #f))
+    (register-defines! indexed)
     (for-each
       (lambda (node)
         (let ((kw (cadr node)))

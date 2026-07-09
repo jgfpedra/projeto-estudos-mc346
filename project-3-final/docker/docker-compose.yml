@@ -4,4 +4,5 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     volumes:
-      - ./output:/fractal/output
+      - ../output:/fractal/output
+      - ../frac:/fractal/frac
