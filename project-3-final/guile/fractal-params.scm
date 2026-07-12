@@ -1,8 +1,10 @@
-;;; fractal-params.scm — primitivas de parâmetro da FractalDSL
 (load "fractal-core.scm")
 
-;; Cada primitiva devolve um novo fractal (sem mutação).
-;; Isso permite encadear chamadas em pipeline funcional.
+(define-syntax fractal-pipe
+  (syntax-rules ()
+    ((_ init) init)
+    ((_ init (fn args ...) rest ...)
+     (fractal-pipe (fn init args ...) rest ...))))
 
 (define (equation fractal expr-str)
   (set-field fractal 'equation expr-str))

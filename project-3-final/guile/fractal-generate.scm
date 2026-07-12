@@ -1,9 +1,6 @@
-;;; fractal-generate.scm — parser de equação + ponto de entrada `generate`
 (load "fractal-core.scm")
 (load "fractal-ifs.scm")
 (load "fractal-coastline.scm")
-
-;; ─── Parser mínimo ────────────────────────────────────────────────────────
 
 (define (parse-exponent s)
   (let ((hat (string-contains s "^")))
@@ -35,17 +32,12 @@
          (rhs   (string-trim (cadr sides))))
     (parse-expr rhs)))
 
-;; ─── Motor de escape ─────────────────────────────────────────────────────
-
-(define (iterate-equation f max-iter c)
-  (let loop ((z (make-c 0.0 0.0)) (i 0))
+(define (iterate-equation f max-iter z0 c)
+  (let loop ((z z0) (i 0))
     (cond ((= i max-iter) i)
-          ((> (c-abs z) 2.0) i)
+          ((> (c-abs z) 4.0) i)
           (else (loop (f z c) (+ i 1))))))
 
-;; Scans a window of the complex plane, one c-value per pixel, and returns
-;; escape-time triples (px py iterations). The window is `center` ± half-width,
-;; where half-width = 200/zoom (so zoom 100 ≈ the classic full-set view).
 (define (generate-equation-grid fractal)
   (let* ((eq-str   (get-field fractal 'equation))
          (f        (parse-equation eq-str))
@@ -58,7 +50,9 @@
          (res      (get-field fractal 'resolution))
          (width    (car res))
          (height   (cadr res))
-         (half-h   (* half-w (/ height width))))
+         (half-h   (* half-w (/ height width)))
+         (c-entry  (assq 'c (get-field fractal 'constants)))
+         (julia-c  (and c-entry (cdr c-entry))))
     (let loop-y ((py 0) (pts '()))
       (if (= py height)
           pts
@@ -68,13 +62,14 @@
                     (let loop-x ((px 0) (acc pts))
                       (if (= px width)
                           acc
-                          (let* ((re   (+ (- cre0 half-w)
-                                          (* (/ px (max 1 (- width 1))) (* 2 half-w))))
-                                 (iter (iterate-equation f max-iter (make-c re im))))
+                          (let* ((re    (+ (- cre0 half-w)
+                                            (* (/ px (max 1 (- width 1))) (* 2 half-w))))
+                                 (point (make-c re im))
+                                 (z0    (if julia-c point (make-c 0.0 0.0)))
+                                 (c     (if julia-c julia-c point))
+                                 (iter  (iterate-equation f max-iter z0 c)))
                             (loop-x (+ px 1)
                                     (cons (list px py iter) acc)))))))))))
-
-;; ─── Ponto de entrada ────────────────────────────────────────────────────
 
 (define (generate fractal)
   (let ((eq-str        (get-field fractal 'equation))
@@ -92,8 +87,6 @@
        (error "Fractal sem equation nem ifs"
               (get-field fractal 'name))))))
 
-;; ─── Exporta pontos para CSV ──────────────────────────────────────────────
-
 (define (export-csv fractal filename)
   (let ((result (generate fractal)))
     (call-with-output-file filename
@@ -109,13 +102,10 @@
         (define (write-escape pts)
           (for-each (lambda (p) (write-pt (car p) (cadr p) "escape" (caddr p))) pts))
         (cond
-          ;; generate-island returns (coast-points . decor-points)
           ((and (pair? result) (pair? (car result)) (list? (caar result)))
            (write-pts (car result) "coast")
            (write-pts (cdr result) "decor"))
-          ;; generate-equation-grid returns a flat list of (px py iter) triples
           ((and (pair? result) (pair? (car result)) (= (length (car result)) 3))
            (write-escape result))
-          ;; everything else (ifs) returns a flat list of (x y) points
           (else
            (write-pts result "point")))))))

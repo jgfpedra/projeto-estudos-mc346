@@ -1,0 +1,27 @@
+fractal IlhaA
+    iterations 6000
+    coastline
+        points 7
+        radius 0.6
+        roughness 0.4
+        depth 5
+
+fractal IlhaB
+    iterations 8000
+    coastline
+        points 8
+        radius 1.0
+        roughness 0.35
+        depth 6
+        decorate
+            use-fractal IlhaA 1.0
+            steps 40
+            scale 0.25
+
+render
+    resolution 1000 1000
+    color ocean
+    style island
+
+generate IlhaA
+generate IlhaB

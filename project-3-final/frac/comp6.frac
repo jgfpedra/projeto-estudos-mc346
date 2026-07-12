@@ -1,0 +1,70 @@
+define decoration Mato
+    steps 40
+    scale 0.18
+    transform 0.85
+        depth 4
+        barnsley
+            affine 1.0  0.85  0.04 -0.04  0.85  0.0  1.60
+    transform 0.15
+        depth 4
+        barnsley
+            affine 1.0  0.20 -0.26  0.23  0.22  0.0  1.60
+
+
+fractal IlhaA
+    iterations 5000
+    coastline
+        points 6
+        radius 0.5
+        roughness 0.4
+        depth 5
+
+fractal IlhaB
+    iterations 6000
+    coastline
+        points 7
+        radius 0.7
+        roughness 0.38
+        depth 5
+
+fractal IlhaC
+    iterations 8000
+    coastline
+        points 8
+        radius 1.0
+        roughness 0.35
+        depth 6
+        decorate
+            use Mato
+            use-fractal IlhaA 0.3
+            steps 30
+            scale 0.2
+            fill 5
+            fill-scale 0.3
+            fill-radius 0.4
+
+fractal IlhaD
+    iterations 9000
+    coastline
+        points 9
+        radius 1.2
+        roughness 0.32
+        depth 6
+        decorate
+            use Mato
+            use-fractal IlhaB 0.3
+            steps 40
+            scale 0.22
+            fill 6
+            fill-scale 0.35
+            fill-radius 0.45
+
+render
+    resolution 1200 1200
+    color ocean
+    style island
+
+generate IlhaA
+generate IlhaB
+generate IlhaC
+generate IlhaD

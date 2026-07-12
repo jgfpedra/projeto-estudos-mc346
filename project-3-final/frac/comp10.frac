@@ -1,0 +1,104 @@
+define decoration Mato
+    steps 30
+    scale 0.18
+    transform 0.85
+        depth 4
+        barnsley
+            affine 1.0  0.85  0.04 -0.04  0.85  0.0  1.60
+    transform 0.15
+        depth 4
+        barnsley
+            affine 1.0  0.20 -0.26  0.23  0.22  0.0  1.60
+
+fractal IlhaA
+    iterations 4000
+    coastline
+        points 6
+        radius 0.4
+        roughness 0.4
+        depth 5
+
+fractal IlhaB
+    iterations 5000
+    coastline
+        points 6
+        radius 0.5
+        roughness 0.4
+        depth 5
+
+fractal IlhaC
+    iterations 6000
+    coastline
+        points 7
+        radius 0.6
+        roughness 0.38
+        depth 5
+        decorate
+            use Mato
+            use-fractal IlhaA 0.4
+            steps 40
+            scale 0.18
+            fill 4
+            fill-scale 0.25
+            fill-radius 0.35
+
+fractal IlhaD
+    iterations 7000
+    coastline
+        points 7
+        radius 0.7
+        roughness 0.36
+        depth 5
+        decorate
+            use Mato
+            use-fractal IlhaB 0.4
+            steps 45
+            scale 0.2
+            fill 4
+            fill-scale 0.28
+            fill-radius 0.38
+
+fractal IlhaE
+    iterations 8000
+    coastline
+        points 8
+        radius 0.9
+        roughness 0.34
+        depth 6
+        decorate
+            use Mato
+            use-fractal IlhaA 0.3
+            steps 30
+            scale 0.22
+            fill 5
+            fill-scale 0.3
+            fill-radius 0.42
+
+fractal IlhaF
+    iterations 10000
+    coastline
+        points 9
+        radius 1.2
+        roughness 0.32
+        depth 6
+        decorate
+            use Mato
+            use-fractal IlhaB 0.25
+            use-fractal IlhaC 0.25
+            steps 40
+            scale 0.24
+            fill 6
+            fill-scale 0.35
+            fill-radius 0.45
+
+render
+    resolution 1400 1400
+    color ocean
+    style island
+
+generate IlhaA
+generate IlhaB
+generate IlhaC
+generate IlhaD
+generate IlhaE
+generate IlhaF
